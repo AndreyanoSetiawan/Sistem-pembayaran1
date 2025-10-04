@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Booking Online</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        padding: 30px;
+        text-align: center;
+        color: white;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        display: none;
+        padding: 40px;
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      .step.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .step h2 {
+        color: #333;
+        margin-bottom: 25px;
+        font-size: 1.8rem;
+        text-align: center;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #4facfe;
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+      }
+
+      .payment-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 30px 0;
+      }
+
+      .payment-option {
+        border: 2px solid #e1e5e9;
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .payment-option:hover {
+        border-color: #4facfe;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .payment-option.selected {
+        border-color: #4facfe;
+        background: rgba(79, 172, 254, 0.1);
+      }
+
+      .payment-option h3 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .payment-option p {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 10px 5px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+      }
+
+      .btn-success {
+        background: #28a745;
+      }
+
+      .btn-warning {
+        background: #ffc107;
+        color: #333;
+      }
+
+      .progress-bar {
+        height: 4px;
+        background: #e1e5e9;
+        margin: 20px 0;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4facfe, #00f2fe);
+        transition: width 0.5s ease;
+      }
+
+      .booking-summary {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .booking-summary h3 {
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e1e5e9;
+      }
+
+      .summary-item:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        color: #4facfe;
+      }
+
+      .notification {
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        display: none;
+      }
+
+      .notification.success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .notification.error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .status-pending {
+        background: #ffc107;
+      }
+      .status-confirmed {
+        background: #28a745;
+      }
+      .status-cancelled {
+        background: #dc3545;
+      }
+
+      .field-map {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px solid #e1e5e9;
+        margin: 15px 0;
+      }
+
+      .field-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-width: 400px;
+        margin: 0 auto 20px;
+      }
+
+      .field {
+        aspect-ratio: 3/2;
+        background: #28a745;
+        border: 3px solid #fff;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        color: white;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+        min-height: 80px;
+      }
+
+      .field::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 3px;
+      }
+
+      .field::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 8px;
+        right: 8px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.6);
+        transform: translateY(-50%);
+      }
+
+      .field .net-line {
+        position: absolute;
+        top: 48%;
+        left: 8px;
+        right: 8px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 1px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .field:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        filter: brightness(1.1);
+      }
+
+      .field.occupied {
+        background: #dc3545;
+        border-color: #c82333;
+        cursor: not-allowed;
+        opacity: 1;
+      }
+
+      .field.occupied::before,
+      .field.occupied::after {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      .field.occupied:hover {
+        transform: none;
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+        filter: none;
+      }
+
+      .field.selected {
+        background: #17a2b8;
+        border-color: #4facfe;
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        filter: brightness(1.2);
+      }
+
+      .field.selected::before,
+      .field.selected::after {
+        border-color: rgba(79, 172, 254, 0.8);
+        background: rgba(79, 172, 254, 0.8);
+      }
+
+      .field-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 2px;
+      }
+
+      .field-name {
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+      }
+
+      .field-status {
+        font-size: 0.75rem;
+        opacity: 0.9;
+      }
+
+      .legend {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .legend-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+      }
+
+      .legend-color.available {
+        background: #28a745;
+      }
+
+      .legend-color.occupied {
+        background: #dc3545;
+      }
+
+      .legend-color.selected {
+        background: #17a2b8;
+        border: 2px solid #4facfe;
+      }
+
+      .legend-color.booked {
+        background: #6f42c1;
+      }
+
+      @media (max-width: 600px) {
+        .field-container {
+          max-width: 300px;
+          gap: 8px;
+        }
+
+        .field {
+          min-height: 70px;
+        }
+
+        .field-number {
+          font-size: 1.2rem;
+        }
+
+        .field-name {
+          font-size: 0.8rem;
+        }
+
+        .field-status {
+          font-size: 0.7rem;
+        }
+      }
+    </style>
+  </head>
+  <script type="module" src="firebase.js"></script>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Sistem Booking Online</h1>
+        <p>Pesan layanan Anda dengan mudah dan cepat</p>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 10%"></div>
+      </div>
+
+      <!-- Step 1: Informasi Pelanggan -->
+      <div class="step active" id="step1">
+        <h2>Informasi Pelanggan</h2>
+        <div class="form-group">
+          <label for="nama">Nama Lengkap *</label>
+          <input type="text" id="nama" required />
+        </div>
+        <div class="form-group">
+          <label for="hp">Nomor HP *</label>
+          <input type="tel" id="hp" required />
+        </div>
+        <div class="form-group">
+          <label for="lapangan">Pilih Lapangan *</label>
+          <div class="field-map">
+            <div class="field-container">
+              <div
+                class="field available"
+                data-field="lapangan1"
+                onclick="selectField('lapangan1')"
+              >
+                <div class="net-line"></div>
+                <div class="field-number">1</div>
+                <div class="field-name">Lapangan A</div>
+                <div class="field-status">Tersedia</div>
+              </div>
+              <div
+                class="field available"
+                data-field="lapangan2"
+                onclick="selectField('lapangan2')"
+              >
+                <div class="net-line"></div>
+                <div class="field-number">2</div>
+                <div class="field-name">Lapangan B</div>
+                <div class="field-status">Tersedia</div>
+              </div>
+              <div
+                class="field available"
+                data-field="lapangan3"
+                onclick="selectField('lapangan3')"
+              >
+                <div class="net-line"></div>
+                <div class="field-number">3</div>
+                <div class="field-name">Lapangan C</div>
+                <div class="field-status">Tersedia</div>
+              </div>
+              <div
+                class="field available"
+                data-field="lapangan4"
+                onclick="selectField('lapangan4')"
+              >
+                <div class="net-line"></div>
+                <div class="field-number">4</div>
+                <div class="field-name">Lapangan D</div>
+                <div class="field-status">Tersedia</div>
+              </div>
+            </div>
+            <div class="legend">
+              <div class="legend-item">
+                <span class="legend-color available"></span>
+                <span>Tersedia</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color occupied"></span>
+                <span>Terpakai</span>
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="lapangan" required />
+        </div>
+        <div class="form-group">
+          <label for="tanggal">Tanggal dan Waktu *</label>
+          <input type="datetime-local" id="tanggal" required />
+        </div>
+        <div class="form-group">
+          <label for="durasi">Jam/Menit Durasi Sewa</label>
+          <select id="durasi">
+            <option value="30">30 Menit</option>
+            <option value="60">1 Jam</option>
+            <option value="90">1.5 Jam</option>
+            <option value="120">2 Jam</option>
+          </select>
+        </div>
+        <div class="buttons">
+          <button class="btn" onclick="nextStep()">Lanjutkan</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Pilihan Pembayaran -->
+      <div class="step" id="step2">
+        <h2>Pilih Metode Pembayaran</h2>
+        <div class="payment-options">
+          <div class="payment-option" onclick="selectPayment('online')">
+            <h3>💳 Online (DIGI-E-WALLET)</h3>
+            <p>Bayar menggunakan e-wallet atau kartu kredit</p>
+          </div>
+          <div class="payment-option" onclick="selectPayment('offline')">
+            <h3>💵 Offline (CASH)</h3>
+            <p>Bayar tunai saat datang ke lokasi</p>
+          </div>
+        </div>
+        <div class="buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">
+            Kembali
+          </button>
+          <button
+            class="btn"
+            id="paymentBtn"
+            onclick="processPayment()"
+            disabled
+          >
+            Proses Pembayaran
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Konfirmasi Online -->
+      <div class="step" id="step3-online">
+        <h2>Pembayaran Online</h2>
+        <div class="booking-summary">
+          <h3>Ringkasan Booking</h3>
+          <div id="bookingSummary"></div>
+        </div>
+        <div class="form-group">
+          <label for="ewallet">Pilih E-Wallet</label>
+          <select id="ewallet">
+            <option value="gopay">GoPay</option>
+            <option value="ovo">OVO</option>
+            <option value="dana">DANA</option>
+            <option value="shopeepay">ShopeePay</option>
+          </select>
+        </div>
+        <div class="notification success" id="paymentSuccess">
+          <strong>Pembayaran Berhasil!</strong> Booking Anda telah dikonfirmasi.
+        </div>
+        <div class="buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">
+            Kembali
+          </button>
+          <button class="btn btn-success" onclick="confirmOnlinePayment()">
+            Bayar Sekarang
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Konfirmasi Offline -->
+      <div class="step" id="step3-offline">
+        <h2>Pembayaran Cash</h2>
+        <div class="booking-summary">
+          <h3>Ringkasan Booking</h3>
+          <div id="bookingSummaryOffline"></div>
+        </div>
+        <div class="notification success" id="bookingSuccess">
+          <strong>Booking Dikonfirmasi!</strong> Silakan datang tepat waktu dan
+          bayar di lokasi.
+        </div>
+        <div class="buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">
+            Kembali
+          </button>
+          <button class="btn btn-warning" onclick="confirmOfflineBooking()">
+            Konfirmasi Booking
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Laporan Status -->
+      <div class="step" id="step4">
+        <h2>Status Booking</h2>
+        <div class="booking-summary">
+          <h3>Detail Booking Anda</h3>
+          <div id="finalBookingDetails"></div>
+        </div>
+        <div class="notification success">
+          <strong>Terima Kasih!</strong> Booking Anda telah berhasil diproses.
+        </div>
+        <div class="buttons">
+          <button class="btn btn-warning" onclick="cancelBookingFromReceipt()">
+            Batalkan Pemesanan
+          </button>
+          <button class="btn" onclick="downloadReport()">
+            Download Laporan
+          </button>
+          <button class="btn btn-secondary" onclick="newBooking()">
+            Booking Baru
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function cancelBookingFromReceipt() {
+        if (confirm("Apakah Anda yakin ingin membatalkan pemesanan ini?")) {
+          // Ubah status booking menjadi cancelled
+          bookingData.paymentStatus = "Cancelled";
+          bookingData.paymentMethod = bookingData.paymentMethod || "-";
+
+          // Kembalikan lapangan ke status tersedia (hapus dari occupiedFields)
+          const index = occupiedFields.indexOf(bookingData.lapangan);
+          if (index > -1) {
+            occupiedFields.splice(index, 1);
+          }
+
+          // Update tampilan lapangan
+          initializeFields();
+
+          // Update detail booking dengan status baru
+          updateFinalBookingDetails();
+
+          // Tampilkan notifikasi pembatalan
+          alert("Pemesanan berhasil dibatalkan.");
+
+          // Disable tombol batalkan agar tidak bisa dibatalkan dua kali
+          const cancelBtn = document.querySelector("#step4 .btn-warning");
+          if (cancelBtn) cancelBtn.disabled = true;
+        }
+      }
+
+      let currentStep = 1;
+      let bookingData = {};
+      let paymentMethod = "";
+      let selectedField = "";
+      let occupiedFields = [""];
+
+      function initializeFields() {
+        const fields = document.querySelectorAll(".field");
+        fields.forEach((field) => {
+          const fieldId = field.getAttribute("data-field");
+
+          // Reset kelas dan style
+          field.classList.remove("occupied", "available");
+          field.style.borderColor = "#fff";
+
+          if (occupiedFields.includes(fieldId)) {
+            field.classList.add("occupied");
+            field.querySelector(".field-status").textContent = "Terpakai";
+            field.removeAttribute("onclick");
+          } else {
+            field.classList.add("available");
+            field.querySelector(".field-status").textContent = "Tersedia";
+            field.setAttribute("onclick", `selectField('${fieldId}')`);
+          }
+        });
+      }
+
+      function selectField(fieldId) {
+        const fieldElement = document.querySelector(
+          `[data-field="${fieldId}"]`
+        );
+
+        if (fieldElement.classList.contains("occupied")) {
+          alert("Lapangan ini sudah terpakai. Silakan pilih lapangan lain.");
+          return;
+        }
+
+        // Reset border warna lapangan yang tersedia
+        document.querySelectorAll(".field.available").forEach((field) => {
+          field.style.borderColor = "#fff";
+        });
+
+        // Tandai lapangan yang dipilih dengan border biru
+        fieldElement.style.borderColor = "#4facfe";
+
+        // Simpan pilihan lapangan
+        selectedField = fieldId;
+        document.getElementById("lapangan").value = fieldId;
+      }
+
+      function updateProgress() {
+        const progress = (currentStep / 4) * 100;
+        document.querySelector(".progress-fill").style.width = progress + "%";
+      }
+
+      function nextStep() {
+        if (validateCurrentStep()) {
+          currentStep++;
+          showStep();
+          updateProgress();
+        }
+      }
+
+      function prevStep() {
+        currentStep--;
+        showStep();
+        updateProgress();
+      }
+
+      function showStep() {
+        document.querySelectorAll(".step").forEach((step) => {
+          step.classList.remove("active");
+        });
+
+        if (currentStep === 3) {
+          if (paymentMethod === "online") {
+            document.getElementById("step3-online").classList.add("active");
+            updateBookingSummary("bookingSummary");
+          } else {
+            document.getElementById("step3-offline").classList.add("active");
+            updateBookingSummary("bookingSummaryOffline");
+          }
+        } else {
+          document.getElementById("step" + currentStep).classList.add("active");
+        }
+      }
+
+      function validateCurrentStep() {
+        if (currentStep === 1) {
+          const nama = document.getElementById("nama").value.trim();
+          const hp = document.getElementById("hp").value.trim();
+          const lapangan = document.getElementById("lapangan").value;
+          const tanggal = document.getElementById("tanggal").value;
+
+          if (!nama || !hp || !lapangan || !tanggal) {
+            alert("Harap lengkapi semua field yang wajib diisi!");
+            return false;
+          }
+
+          bookingData = {
+            nama: nama,
+            hp: hp,
+            lapangan: lapangan,
+            tanggal: tanggal,
+            durasi: document.getElementById("durasi").value || "60",
+          };
+        }
+        return true;
+      }
+
+      function selectPayment(method) {
+        paymentMethod = method;
+        document.querySelectorAll(".payment-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+        event.target.closest(".payment-option").classList.add("selected");
+        document.getElementById("paymentBtn").disabled = false;
+      }
+
+      function processPayment() {
+        if (paymentMethod) {
+          nextStep();
+        } else {
+          alert("Silakan pilih metode pembayaran terlebih dahulu!");
+        }
+      }
+
+      function updateBookingSummary(elementId) {
+        const lapanganHarga = 120000; // Harga sama rata untuk semua lapangan
+
+        const lapanganNames = {
+          lapangan1: "Lapangan A",
+          lapangan2: "Lapangan B",
+          lapangan3: "Lapangan C",
+          lapangan4: "Lapangan D",
+        };
+
+        const durasi = parseInt(bookingData.durasi);
+        const totalHarga = lapanganHarga * (durasi / 60);
+
+        const summary = `
+        <div class="summary-item">
+            <span>Nama:</span>
+            <span>${bookingData.nama}</span>
+        </div>
+        <div class="summary-item">
+            <span>Nomor HP:</span>
+            <span>${bookingData.hp}</span>
+        </div>
+        <div class="summary-item">
+            <span>Lapangan:</span>
+            <span>${lapanganNames[bookingData.lapangan]}</span>
+        </div>
+        <div class="summary-item">
+            <span>Tanggal & Waktu:</span>
+            <span>${new Date(bookingData.tanggal).toLocaleString(
+              "id-ID"
+            )}</span>
+        </div>
+        <div class="summary-item">
+            <span>Durasi:</span>
+            <span>${bookingData.durasi} menit</span>
+        </div>
+        <div class="summary-item">
+            <span>Total Harga:</span>
+            <span>Rp ${totalHarga.toLocaleString("id-ID")}</span>
+        </div>
+    `;
+
+        document.getElementById(elementId).innerHTML = summary;
+      }
+
+      function confirmOnlinePayment() {
+        if (!occupiedFields.includes(selectedField)) {
+          occupiedFields.push(selectedField);
+        }
+        updateFieldStatus();
+
+        document.getElementById("paymentSuccess").style.display = "block";
+        bookingData.paymentMethod = "Online";
+        bookingData.paymentStatus = "Confirmed";
+        bookingData.ewallet = document.getElementById("ewallet").value;
+
+        // 🔹 Simpan data ke Firebase Firestore
+        if (window.saveBooking) saveBooking(bookingData);
+
+        setTimeout(() => {
+          currentStep = 4;
+          showStep();
+          updateProgress();
+          updateFinalBookingDetails();
+        }, 2000);
+      }
+
+      function confirmOfflineBooking() {
+        if (!occupiedFields.includes(selectedField)) {
+          occupiedFields.push(selectedField);
+        }
+        updateFieldStatus();
+
+        document.getElementById("bookingSuccess").style.display = "block";
+        bookingData.paymentMethod = "Cash";
+        bookingData.paymentStatus = "Pending";
+
+        // 🔹 Simpan data ke Firebase Firestore
+        if (window.saveBooking) saveBooking(bookingData);
+
+        setTimeout(() => {
+          currentStep = 4;
+          showStep();
+          updateProgress();
+          updateFinalBookingDetails();
+        }, 2000);
+      }
+
+      function updateFieldStatus() {
+        // Refresh semua lapangan
+        initializeFields();
+
+        // Reset border warna lapangan yang dipilih
+        document.querySelectorAll(".field.available").forEach((field) => {
+          field.style.borderColor = "#fff";
+        });
+      }
+
+      function cancelBookingFromReceipt() {
+        if (confirm("Apakah Anda yakin ingin membatalkan pemesanan ini?")) {
+          bookingData.paymentStatus = "Cancelled";
+          bookingData.paymentMethod = bookingData.paymentMethod || "-";
+
+          // Hapus lapangan dari occupiedFields agar status lapangan kembali tersedia
+          const index = occupiedFields.indexOf(bookingData.lapangan);
+          if (index > -1) {
+            occupiedFields.splice(index, 1);
+          }
+
+          initializeFields();
+          updateFinalBookingDetails();
+
+          alert("Pemesanan berhasil dibatalkan.");
+
+          // Disable tombol batalkan agar tidak bisa dibatalkan dua kali
+          const cancelBtn = document.querySelector("#step4 .btn-warning");
+          if (cancelBtn) cancelBtn.disabled = true;
+        }
+      }
+
+      function updateFinalBookingDetails() {
+        const lapanganHarga = 120000; // Harga konsisten
+
+        const lapanganNames = {
+          lapangan1: "Lapangan A",
+          lapangan2: "Lapangan B",
+          lapangan3: "Lapangan C",
+          lapangan4: "Lapangan D",
+        };
+
+        const durasi = parseInt(bookingData.durasi);
+        const totalHarga = lapanganHarga * (durasi / 60);
+        const bookingId = "BK" + Date.now().toString().slice(-6);
+
+        let statusClass = "status-pending";
+        if (bookingData.paymentStatus === "Confirmed")
+          statusClass = "status-confirmed";
+        else if (bookingData.paymentStatus === "Cancelled")
+          statusClass = "status-cancelled";
+
+        const details = `
+        <div class="summary-item">
+            <span>Booking ID:</span>
+            <span>${bookingId}</span>
+        </div>
+        <div class="summary-item">
+            <span>Status:</span>
+            <span><span class="status-indicator ${statusClass}"></span>${
+          bookingData.paymentStatus
+        }</span>
+        </div>
+        <div class="summary-item">
+            <span>Nama:</span>
+            <span>${bookingData.nama}</span>
+        </div>
+        <div class="summary-item">
+            <span>Lapangan:</span>
+            <span>${lapanganNames[bookingData.lapangan]}</span>
+        </div>
+        <div class="summary-item">
+            <span>Tanggal & Waktu:</span>
+            <span>${new Date(bookingData.tanggal).toLocaleString(
+              "id-ID"
+            )}</span>
+        </div>
+        <div class="summary-item">
+            <span>Metode Pembayaran:</span>
+            <span>${bookingData.paymentMethod}${
+          bookingData.ewallet ? " (" + bookingData.ewallet + ")" : ""
+        }</span>
+        </div>
+        <div class="summary-item">
+            <span>Total Pembayaran:</span>
+            <span>Rp ${totalHarga.toLocaleString("id-ID")}</span>
+        </div>
+    `;
+
+        document.getElementById("finalBookingDetails").innerHTML = details;
+      }
+
+      function downloadReport() {
+        alert("Laporan booking telah didownload! (Simulasi)");
+      }
+
+      function newBooking() {
+        currentStep = 1;
+        bookingData = {};
+        paymentMethod = "";
+        selectedField = "";
+
+        // Reset form
+        document.getElementById("nama").value = "";
+        document.getElementById("hp").value = "";
+        document.getElementById("lapangan").value = "";
+        document.getElementById("tanggal").value = "";
+        document.getElementById("durasi").value = "30";
+
+        // Reinitialize fields
+        initializeFields();
+
+        // Reset notifications
+        document.querySelectorAll(".notification").forEach((notif) => {
+          notif.style.display = "none";
+        });
+
+        // Reset payment selection
+        document.querySelectorAll(".payment-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+        document.getElementById("paymentBtn").disabled = true;
+
+        showStep();
+        updateProgress();
+      }
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        initializeFields();
+        updateProgress();
+      });
+    </script>
+  </body>
+</html>
