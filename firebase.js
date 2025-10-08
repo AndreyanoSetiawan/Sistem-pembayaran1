@@ -5,6 +5,10 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  query,
+  onSnapshot,
+  deleteDoc,
+  doc,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // ===== CONFIG FIREBASE PUNYA ANDRE =====
@@ -22,18 +26,37 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Fungsi untuk menyimpan data booking ke Firestore
-async function saveBooking(data) {
+// ===== 1️⃣ FUNGSI HAPUS DATA BOOKING =====
+export async function deleteBooking(bookingId) {
   try {
-    await addDoc(collection(db, "bookings"), {
+    await deleteDoc(doc(db, "bookings", bookingId));
+    console.log("🗑️ Booking berhasil dihapus:", bookingId);
+  } catch (error) {
+    console.error("❌ Gagal menghapus booking:", error);
+  }
+}
+
+// ===== 2️⃣ FUNGSI SIMPAN DATA BOOKING =====
+export async function saveBooking(data) {
+  try {
+    const ref = await addDoc(collection(db, "bookings"), {
       ...data,
       createdAt: serverTimestamp(),
     });
     console.log("✅ Booking berhasil disimpan:", data);
+    return ref.id; // HARUS ADA INI
   } catch (error) {
     console.error("❌ Gagal menyimpan booking:", error);
   }
 }
-
-// Supaya bisa dipanggil dari file HTML utama
-window.saveBooking = saveBooking;
+// ===== 3️⃣ FUNGSI REALTIME UPDATE =====
+export function subscribeBookings(callback) {
+  const q = query(collection(db, "bookings"));
+  return onSnapshot(q, (snapshot) => {
+    const list = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    callback(list);
+  });
+}
