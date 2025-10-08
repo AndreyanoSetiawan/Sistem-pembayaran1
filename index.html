@@ -841,7 +841,6 @@
 
         document.getElementById("paymentSuccess").style.display = "block";
         bookingData.paymentMethod = "Online";
-        bookingData.paymentStatus = "Confirmed";
         bookingData.ewallet = document.getElementById("ewallet").value;
 
         // 🔹 Simpan data ke Firebase Firestore
@@ -863,7 +862,6 @@
 
         document.getElementById("bookingSuccess").style.display = "block";
         bookingData.paymentMethod = "Cash";
-        bookingData.paymentStatus = "Pending";
 
         // 🔹 Simpan data ke Firebase Firestore
         if (window.saveBooking) saveBooking(bookingData);
@@ -932,12 +930,6 @@
         <div class="summary-item">
             <span>Booking ID:</span>
             <span>${bookingId}</span>
-        </div>
-        <div class="summary-item">
-            <span>Status:</span>
-            <span><span class="status-indicator ${statusClass}"></span>${
-          bookingData.paymentStatus
-        }</span>
         </div>
         <div class="summary-item">
             <span>Nama:</span>
