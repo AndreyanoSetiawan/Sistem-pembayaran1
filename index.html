@@ -196,6 +196,44 @@
         margin-bottom: 15px;
       }
 
+      .booking-status-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 25px 30px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .booking-status-card h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 15px;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        color: #333;
+      }
+
+      .summary-item:last-child {
+        border-bottom: none;
+      }
+
+      .summary-item.total {
+        font-weight: 600;
+      }
+
+      .buttons {
+        display: flex;
+        justify-content: center;
+        margin-top: 25px;
+        gap: 10px;
+      }
+
       .summary-item {
         display: flex;
         justify-content: space-between;
@@ -459,41 +497,25 @@
           <label for="lapangan">Pilih Lapangan *</label>
           <div class="field-map">
             <div class="field-container">
-              <div
-                class="field available"
-                data-field="lapangan1"
-                onclick="selectField('lapangan1')"
-              >
+              <div class="field available" data-field="lapangan1">
                 <div class="net-line"></div>
                 <div class="field-number">1</div>
                 <div class="field-name">Lapangan A</div>
                 <div class="field-status">Tersedia</div>
               </div>
-              <div
-                class="field available"
-                data-field="lapangan2"
-                onclick="selectField('lapangan2')"
-              >
+              <div class="field available" data-field="lapangan2">
                 <div class="net-line"></div>
                 <div class="field-number">2</div>
                 <div class="field-name">Lapangan B</div>
                 <div class="field-status">Tersedia</div>
               </div>
-              <div
-                class="field available"
-                data-field="lapangan3"
-                onclick="selectField('lapangan3')"
-              >
+              <div class="field available" data-field="lapangan3">
                 <div class="net-line"></div>
                 <div class="field-number">3</div>
                 <div class="field-name">Lapangan C</div>
                 <div class="field-status">Tersedia</div>
               </div>
-              <div
-                class="field available"
-                data-field="lapangan4"
-                onclick="selectField('lapangan4')"
-              >
+              <div class="field available" data-field="lapangan4">
                 <div class="net-line"></div>
                 <div class="field-number">4</div>
                 <div class="field-name">Lapangan D</div>
@@ -591,20 +613,28 @@
       <!-- Step 3: Konfirmasi Offline -->
       <div class="step" id="step3-offline">
         <h2>Pembayaran Cash</h2>
+
         <div class="booking-summary">
           <h3>Ringkasan Booking</h3>
           <div id="bookingSummaryOffline"></div>
         </div>
-        <div class="notification success" id="bookingSuccess">
-          <strong>Booking Dikonfirmasi!</strong> Silakan datang tepat waktu dan
-          bayar di lokasi.
+
+        <!-- Tambahkan notifikasi setelah bayar -->
+        <div
+          class="notification success"
+          id="bookingSuccess"
+          style="display: none"
+        >
+          <strong>Pembayaran Berhasil!</strong> Booking Anda telah dikonfirmasi.
         </div>
+
         <div class="buttons">
           <button class="btn btn-secondary" onclick="prevStep()">
             Kembali
           </button>
-          <button class="btn btn-warning" onclick="confirmOfflineBooking()">
-            Konfirmasi Booking
+          <!-- 🔥 Ubah label tombol ini -->
+          <button class="btn btn-success" onclick="confirmOfflineBooking()">
+            Bayar Sekarang
           </button>
         </div>
       </div>
@@ -630,57 +660,71 @@
       </div>
     </div>
 
-    <script>
-      function cancelBookingFromReceipt() {
-        if (confirm("Apakah Anda yakin ingin membatalkan pemesanan ini?")) {
-          // Ubah status booking menjadi cancelled
-          bookingData.paymentStatus = "Cancelled";
-          bookingData.paymentMethod = bookingData.paymentMethod || "-";
-
-          // Kembalikan lapangan ke status tersedia (hapus dari occupiedFields)
-          const index = occupiedFields.indexOf(bookingData.lapangan);
-          if (index > -1) {
-            occupiedFields.splice(index, 1);
-          }
-
-          // Update tampilan lapangan
-          initializeFields();
-
-          // Update detail booking dengan status baru
-          updateFinalBookingDetails();
-
-          // Tampilkan notifikasi pembatalan
-          alert("Pemesanan berhasil dibatalkan.");
-
-          // Disable tombol batalkan agar tidak bisa dibatalkan dua kali
-          const cancelBtn = document.querySelector("#step4 .btn-warning");
-          if (cancelBtn) cancelBtn.disabled = true;
-        }
-      }
+    <script type="module" src="firebase.js"></script>
+    <script type="module">
+      import {
+        subscribeBookings,
+        saveBooking,
+        deleteBooking,
+      } from "./firebase.js";
 
       let currentStep = 1;
       let bookingData = {};
       let paymentMethod = "";
       let selectedField = "";
-      let occupiedFields = [""];
+      let activeBookings = [];
+
+      function parseISO(s) {
+        return s ? new Date(s) : null;
+      }
+
+      function overlaps(aStart, aEnd, bStart, bEnd) {
+        return aStart < bEnd && bStart < aEnd;
+      }
 
       function initializeFields() {
         const fields = document.querySelectorAll(".field");
         fields.forEach((field) => {
           const fieldId = field.getAttribute("data-field");
-
-          // Reset kelas dan style
           field.classList.remove("occupied", "available");
           field.style.borderColor = "#fff";
+          field.classList.add("available");
+          field.querySelector(".field-status").textContent = "Tersedia";
+          field.setAttribute("onclick", `selectField('${fieldId}')`);
+        });
+      }
 
-          if (occupiedFields.includes(fieldId)) {
-            field.classList.add("occupied");
-            field.querySelector(".field-status").textContent = "Terpakai";
-            field.removeAttribute("onclick");
-          } else {
-            field.classList.add("available");
-            field.querySelector(".field-status").textContent = "Tersedia";
-            field.setAttribute("onclick", `selectField('${fieldId}')`);
+      function renderFieldStatus() {
+        const tanggalVal = document.getElementById("tanggal").value;
+        const durasiVal = parseInt(
+          document.getElementById("durasi").value || "60",
+          10
+        );
+        if (!tanggalVal) return;
+
+        const desiredStart = new Date(tanggalVal);
+        const desiredEnd = new Date(
+          desiredStart.getTime() + durasiVal * 60_000
+        );
+
+        initializeFields();
+
+        activeBookings.forEach((b) => {
+          const bStart = parseISO(b.startTime);
+          const bEnd = parseISO(b.endTime);
+          if (!bStart || !bEnd) return;
+
+          const sameDay = bStart.toDateString() === desiredStart.toDateString();
+          if (!sameDay) return;
+
+          if (overlaps(desiredStart, desiredEnd, bStart, bEnd)) {
+            const el = document.querySelector(`[data-field="${b.lapangan}"]`);
+            if (el) {
+              el.classList.remove("available");
+              el.classList.add("occupied");
+              el.querySelector(".field-status").textContent = "Terpakai";
+              el.removeAttribute("onclick");
+            }
           }
         });
       }
@@ -689,21 +733,15 @@
         const fieldElement = document.querySelector(
           `[data-field="${fieldId}"]`
         );
-
         if (fieldElement.classList.contains("occupied")) {
-          alert("Lapangan ini sudah terpakai. Silakan pilih lapangan lain.");
+          alert("Lapangan ini sudah terpakai pada waktu tersebut!");
           return;
         }
 
-        // Reset border warna lapangan yang tersedia
-        document.querySelectorAll(".field.available").forEach((field) => {
-          field.style.borderColor = "#fff";
-        });
-
-        // Tandai lapangan yang dipilih dengan border biru
+        document
+          .querySelectorAll(".field.available")
+          .forEach((f) => (f.style.borderColor = "#fff"));
         fieldElement.style.borderColor = "#4facfe";
-
-        // Simpan pilihan lapangan
         selectedField = fieldId;
         document.getElementById("lapangan").value = fieldId;
       }
@@ -728,10 +766,9 @@
       }
 
       function showStep() {
-        document.querySelectorAll(".step").forEach((step) => {
-          step.classList.remove("active");
-        });
-
+        document
+          .querySelectorAll(".step")
+          .forEach((s) => s.classList.remove("active"));
         if (currentStep === 3) {
           if (paymentMethod === "online") {
             document.getElementById("step3-online").classList.add("active");
@@ -751,210 +788,176 @@
           const hp = document.getElementById("hp").value.trim();
           const lapangan = document.getElementById("lapangan").value;
           const tanggal = document.getElementById("tanggal").value;
+          const durasi = document.getElementById("durasi").value || "60";
 
           if (!nama || !hp || !lapangan || !tanggal) {
             alert("Harap lengkapi semua field yang wajib diisi!");
             return false;
           }
 
-          bookingData = {
-            nama: nama,
-            hp: hp,
-            lapangan: lapangan,
-            tanggal: tanggal,
-            durasi: document.getElementById("durasi").value || "60",
-          };
+          // Cek apakah lapangan sedang terpakai di jam ini
+          const desiredStart = new Date(tanggal);
+          const desiredEnd = new Date(
+            desiredStart.getTime() + parseInt(durasi) * 60_000
+          );
+          const isOccupied = activeBookings.some(
+            (b) =>
+              b.lapangan === lapangan &&
+              overlaps(
+                desiredStart,
+                desiredEnd,
+                new Date(b.startTime),
+                new Date(b.endTime)
+              ) &&
+              new Date(b.startTime).toDateString() ===
+                desiredStart.toDateString()
+          );
+
+          if (isOccupied) {
+            alert("Lapangan ini sudah dibooking pada waktu tersebut!");
+            renderFieldStatus();
+            return false;
+          }
+
+          bookingData = { nama, hp, lapangan, tanggal, durasi };
         }
         return true;
       }
 
       function selectPayment(method) {
         paymentMethod = method;
-        document.querySelectorAll(".payment-option").forEach((option) => {
-          option.classList.remove("selected");
-        });
+        document
+          .querySelectorAll(".payment-option")
+          .forEach((option) => option.classList.remove("selected"));
         event.target.closest(".payment-option").classList.add("selected");
         document.getElementById("paymentBtn").disabled = false;
       }
 
       function processPayment() {
-        if (paymentMethod) {
-          nextStep();
-        } else {
-          alert("Silakan pilih metode pembayaran terlebih dahulu!");
-        }
+        if (paymentMethod) nextStep();
+        else alert("Silakan pilih metode pembayaran terlebih dahulu!");
       }
 
-      function updateBookingSummary(elementId) {
-        const lapanganHarga = 120000; // Harga sama rata untuk semua lapangan
-
-        const lapanganNames = {
+      function updateBookingSummary(id) {
+        const names = {
           lapangan1: "Lapangan A",
           lapangan2: "Lapangan B",
           lapangan3: "Lapangan C",
           lapangan4: "Lapangan D",
         };
+        const price = 120000;
+        const dur = parseInt(bookingData.durasi);
+        const total = price * (dur / 60);
 
-        const durasi = parseInt(bookingData.durasi);
-        const totalHarga = lapanganHarga * (durasi / 60);
-
-        const summary = `
-        <div class="summary-item">
-            <span>Nama:</span>
-            <span>${bookingData.nama}</span>
-        </div>
-        <div class="summary-item">
-            <span>Nomor HP:</span>
-            <span>${bookingData.hp}</span>
-        </div>
-        <div class="summary-item">
-            <span>Lapangan:</span>
-            <span>${lapanganNames[bookingData.lapangan]}</span>
-        </div>
-        <div class="summary-item">
-            <span>Tanggal & Waktu:</span>
-            <span>${new Date(bookingData.tanggal).toLocaleString(
+        document.getElementById(id).innerHTML = `
+            <div class="summary-item"><span>Nama:</span><span>${
+              bookingData.nama
+            }</span></div>
+            <div class="summary-item"><span>Lapangan:</span><span>${
+              names[bookingData.lapangan]
+            }</span></div>
+            <div class="summary-item"><span>Tanggal & Waktu:</span><span>${new Date(
+              bookingData.tanggal
+            ).toLocaleString("id-ID")}</span></div>
+            <div class="summary-item"><span>Durasi:</span><span>${
+              bookingData.durasi
+            } menit</span></div>
+            <div class="summary-item"><span>Total Harga:</span><span>Rp ${total.toLocaleString(
               "id-ID"
-            )}</span>
-        </div>
-        <div class="summary-item">
-            <span>Durasi:</span>
-            <span>${bookingData.durasi} menit</span>
-        </div>
-        <div class="summary-item">
-            <span>Total Harga:</span>
-            <span>Rp ${totalHarga.toLocaleString("id-ID")}</span>
-        </div>
-    `;
-
-        document.getElementById(elementId).innerHTML = summary;
+            )}</span></div>`;
       }
 
-      function confirmOnlinePayment() {
-        if (!occupiedFields.includes(selectedField)) {
-          occupiedFields.push(selectedField);
-        }
-        updateFieldStatus();
-
-        document.getElementById("paymentSuccess").style.display = "block";
+      async function confirmOnlinePayment() {
+        const tanggal = new Date(bookingData.tanggal);
+        const dur = parseInt(bookingData.durasi);
+        const end = new Date(tanggal.getTime() + dur * 60_000);
         bookingData.paymentMethod = "Online";
+        bookingData.startTime = tanggal.toISOString();
+        bookingData.endTime = end.toISOString();
         bookingData.ewallet = document.getElementById("ewallet").value;
 
-        // 🔹 Simpan data ke Firebase Firestore
-        if (window.saveBooking) saveBooking(bookingData);
-
-        setTimeout(() => {
-          currentStep = 4;
-          showStep();
-          updateProgress();
-          updateFinalBookingDetails();
-        }, 2000);
+        const id = await saveBooking(bookingData);
+        bookingData.bookingId = id; // simpan ID dokumen
+        document.getElementById("paymentSuccess").style.display = "block";
+        currentStep = 4;
+        showStep();
+        updateProgress();
+        updateFinalBookingDetails();
       }
 
-      function confirmOfflineBooking() {
-        if (!occupiedFields.includes(selectedField)) {
-          occupiedFields.push(selectedField);
-        }
-        updateFieldStatus();
+      async function confirmOfflineBooking() {
+        const tanggal = new Date(bookingData.tanggal);
+        const dur = parseInt(bookingData.durasi);
+        const end = new Date(tanggal.getTime() + dur * 60_000);
+        bookingData.paymentMethod = "Offline";
+        bookingData.startTime = tanggal.toISOString();
+        bookingData.endTime = end.toISOString();
 
+        const id = await saveBooking(bookingData);
+        bookingData.bookingId = id;
         document.getElementById("bookingSuccess").style.display = "block";
-        bookingData.paymentMethod = "Cash";
-
-        // 🔹 Simpan data ke Firebase Firestore
-        if (window.saveBooking) saveBooking(bookingData);
-
-        setTimeout(() => {
-          currentStep = 4;
-          showStep();
-          updateProgress();
-          updateFinalBookingDetails();
-        }, 2000);
+        currentStep = 4;
+        showStep();
+        updateProgress();
+        updateFinalBookingDetails();
       }
 
-      function updateFieldStatus() {
-        // Refresh semua lapangan
-        initializeFields();
-
-        // Reset border warna lapangan yang dipilih
-        document.querySelectorAll(".field.available").forEach((field) => {
-          field.style.borderColor = "#fff";
-        });
-      }
-
-      function cancelBookingFromReceipt() {
-        if (confirm("Apakah Anda yakin ingin membatalkan pemesanan ini?")) {
-          bookingData.paymentStatus = "Cancelled";
-          bookingData.paymentMethod = bookingData.paymentMethod || "-";
-
-          // Hapus lapangan dari occupiedFields agar status lapangan kembali tersedia
-          const index = occupiedFields.indexOf(bookingData.lapangan);
-          if (index > -1) {
-            occupiedFields.splice(index, 1);
-          }
-
-          initializeFields();
-          updateFinalBookingDetails();
-
-          alert("Pemesanan berhasil dibatalkan.");
-
-          // Disable tombol batalkan agar tidak bisa dibatalkan dua kali
-          const cancelBtn = document.querySelector("#step4 .btn-warning");
-          if (cancelBtn) cancelBtn.disabled = true;
+      async function cancelBookingFromReceipt() {
+        if (!bookingData.bookingId) {
+          alert("⚠️ Data booking tidak ditemukan.");
+          return;
+        }
+        const konfirmasi = confirm(
+          "Apakah Anda yakin ingin membatalkan pemesanan ini?"
+        );
+        if (!konfirmasi) return;
+        try {
+          // 🔥 Hapus data dari Firestore
+          await deleteBooking(bookingData.bookingId);
+          alert(
+            "✅ Pemesanan berhasil dibatalkan dan data dihapus dari Firebase."
+          );
+          newBooking();
+        } catch (error) {
+          console.error("❌ Gagal membatalkan booking:", error);
+          alert("Terjadi kesalahan saat menghapus data dari Firebase.");
         }
       }
 
       function updateFinalBookingDetails() {
-        const lapanganHarga = 120000; // Harga konsisten
-
-        const lapanganNames = {
+        const names = {
           lapangan1: "Lapangan A",
           lapangan2: "Lapangan B",
           lapangan3: "Lapangan C",
           lapangan4: "Lapangan D",
         };
 
-        const durasi = parseInt(bookingData.durasi);
-        const totalHarga = lapanganHarga * (durasi / 60);
-        const bookingId = "BK" + Date.now().toString().slice(-6);
+        const bookingID = "BK" + Math.floor(100000 + Math.random() * 900000);
+        const price = 120000;
+        const dur = parseInt(bookingData.durasi);
+        const total = price * (dur / 60);
 
-        let statusClass = "status-pending";
-        if (bookingData.paymentStatus === "Confirmed")
-          statusClass = "status-confirmed";
-        else if (bookingData.paymentStatus === "Cancelled")
-          statusClass = "status-cancelled";
-
-        const details = `
-        <div class="summary-item">
-            <span>Booking ID:</span>
-            <span>${bookingId}</span>
-        </div>
-        <div class="summary-item">
-            <span>Nama:</span>
-            <span>${bookingData.nama}</span>
-        </div>
-        <div class="summary-item">
-            <span>Lapangan:</span>
-            <span>${lapanganNames[bookingData.lapangan]}</span>
-        </div>
-        <div class="summary-item">
-            <span>Tanggal & Waktu:</span>
-            <span>${new Date(bookingData.tanggal).toLocaleString(
+        document.getElementById("finalBookingDetails").innerHTML = `
+          <div class="booking-status-card">
+            <h3>Detail Booking Anda</h3>
+            <div class="summary-item"><span>Booking ID:</span><span>${bookingID}</span></div>
+            <div class="summary-item"><span>Nama:</span><span>${
+              bookingData.nama
+            }</span></div>
+            <div class="summary-item"><span>Lapangan:</span><span>${
+              names[bookingData.lapangan]
+            }</span></div>
+            <div class="summary-item"><span>Tanggal & Waktu:</span><span>${new Date(
+              bookingData.tanggal
+            ).toLocaleString("id-ID")}</span></div>
+            <div class="summary-item"><span>Metode Pembayaran:</span><span>${
+              bookingData.paymentMethod
+            }</span></div>
+            <div class="summary-item total"><span>Total Pembayaran:</span><span style="color:#007bff;">Rp ${total.toLocaleString(
               "id-ID"
-            )}</span>
-        </div>
-        <div class="summary-item">
-            <span>Metode Pembayaran:</span>
-            <span>${bookingData.paymentMethod}${
-          bookingData.ewallet ? " (" + bookingData.ewallet + ")" : ""
-        }</span>
-        </div>
-        <div class="summary-item">
-            <span>Total Pembayaran:</span>
-            <span>Rp ${totalHarga.toLocaleString("id-ID")}</span>
-        </div>
-    `;
-
-        document.getElementById("finalBookingDetails").innerHTML = details;
+            )}</span></div>
+          </div>
+        `;
       }
 
       function newBooking() {
@@ -962,37 +965,65 @@
         bookingData = {};
         paymentMethod = "";
         selectedField = "";
-
-        // Reset form
-        document.getElementById("nama").value = "";
-        document.getElementById("hp").value = "";
-        document.getElementById("lapangan").value = "";
-        document.getElementById("tanggal").value = "";
-        document.getElementById("durasi").value = "30";
-
-        // Reinitialize fields
+        document
+          .querySelectorAll("input, select")
+          .forEach((i) => (i.value = ""));
         initializeFields();
-
-        // Reset notifications
-        document.querySelectorAll(".notification").forEach((notif) => {
-          notif.style.display = "none";
-        });
-
-        // Reset payment selection
-        document.querySelectorAll(".payment-option").forEach((option) => {
-          option.classList.remove("selected");
-        });
-        document.getElementById("paymentBtn").disabled = true;
-
+        document
+          .querySelectorAll(".notification")
+          .forEach((n) => (n.style.display = "none"));
         showStep();
         updateProgress();
       }
 
-      // Initialize when page loads
-      document.addEventListener("DOMContentLoaded", function () {
+      document.addEventListener("DOMContentLoaded", () => {
         initializeFields();
         updateProgress();
+
+        // Realtime update dari Firestore
+        subscribeBookings((list) => {
+          activeBookings = list;
+          renderFieldStatus();
+        });
+
+        document
+          .getElementById("tanggal")
+          .addEventListener("change", renderFieldStatus);
+        document
+          .getElementById("durasi")
+          .addEventListener("change", renderFieldStatus);
+
+        // ✅ Tambahkan ini ↓↓↓
+        document.querySelectorAll(".field").forEach((field) => {
+          field.addEventListener("click", () => {
+            const id = field.getAttribute("data-field");
+            selectField(id);
+          });
+        });
       });
+
+      const cancelBookingBtn = document.getElementById("cancelBookingBtn");
+      if (cancelBookingBtn) {
+        cancelBookingBtn.addEventListener("click", async () => {
+          const bookingId = document.getElementById("bookingId")?.textContent;
+          if (!bookingId) return alert("ID booking tidak ditemukan.");
+          if (!confirm("Yakin ingin membatalkan pesanan ini?")) return;
+
+          await deleteBooking(bookingId);
+          alert("Pesanan berhasil dibatalkan dan dihapus dari database.");
+          location.reload();
+        });
+      }
+
+      window.confirmOfflineBooking = confirmOfflineBooking;
+      window.confirmOnlinePayment = confirmOnlinePayment;
+      window.cancelBookingFromReceipt = cancelBookingFromReceipt;
+      window.newBooking = newBooking;
+      window.prevStep = prevStep;
+      window.nextStep = nextStep;
+      window.selectPayment = selectPayment;
+      window.processPayment = processPayment;
+      window.selectField = selectField;
     </script>
   </body>
 </html>
