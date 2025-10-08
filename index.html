@@ -623,9 +623,6 @@
           <button class="btn btn-warning" onclick="cancelBookingFromReceipt()">
             Batalkan Pemesanan
           </button>
-          <button class="btn" onclick="downloadReport()">
-            Download Laporan
-          </button>
           <button class="btn btn-secondary" onclick="newBooking()">
             Booking Baru
           </button>
@@ -958,10 +955,6 @@
     `;
 
         document.getElementById("finalBookingDetails").innerHTML = details;
-      }
-
-      function downloadReport() {
-        alert("Laporan booking telah didownload! (Simulasi)");
       }
 
       function newBooking() {
